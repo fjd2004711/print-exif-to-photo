@@ -1,6 +1,7 @@
 import os
 from PIL import Image, ImageDraw, ImageFont
 from geopy.geocoders import Nominatim
+from datetime import datetime
 import piexif
 
 # 创建一个geolocator对象
@@ -82,21 +83,31 @@ def reorder_address(address):
     sorted_address = ', '.join(reordered_parts)
     return sorted_address
 
-def add_text_to_image(img_path, text, font_path='msyh.ttc', font_size=48):
+def format_time(time_str):
+    # 转换时间格式从 "YYYY:MM:DD HH:MM:SS" 到 "YYYY年MM月DD日 HH:MM"
+    try:
+        original_format = "%Y:%m:%d %H:%M:%S"
+        target_format = "%Y年%m月%d日 %H:%M"
+        return datetime.strptime(time_str, original_format).strftime(target_format)
+    except ValueError:
+        return "时间未知"
+
+
+def add_text_to_image(img_path, time, address, font_path='msyh.ttc', font_size=48):
     # 加载图片
     img = Image.open(img_path)
     draw = ImageDraw.Draw(img)
 
-    # 加载字体文件和指定大小
+    # 设置字体
     font = ImageFont.truetype(font_path, font_size)
 
-    # 分割时间和地址，并移除地址中的“中国”
-    time, address = text.split(', 位置: ')
-    address = address.replace("中国", "").strip()
+    # 格式化时间和地址
+    time_formatted = format_time(time)
+    # 删除地址末尾的逗号
+    address_formatted = address.rstrip(', 中国')
 
-    # 使用自定义函数对地址进行排序
-    sorted_address = reorder_address(address)
-    text = f"{time}\n{address}"  # 组合成新的文本
+    # 组合文本
+    text = f"{time_formatted}\n{address_formatted}"
 
     # 使用textbbox获取每行文本的边界框，计算总文本大小
     text_lines = text.split('\n')
@@ -154,12 +165,9 @@ for filename in os.listdir(folder_path):
             if lat and lon:
                 location = geolocator.reverse((lat, lon), language='zh')
                 reordered_address = reorder_address(location.address)
-                text_to_add = f"拍摄时间: {time}, 位置: {reordered_address}"
-                img_with_text = add_text_to_image(img_path, text_to_add)  # 添加文本到图片
+                img_with_text = add_text_to_image(img_path, time, reordered_address)  # 添加文本到图片
                 img_with_text.save(os.path.join(tagged_folder_path, filename))  # 保存带标签的图片
-
-                print(
-                    f"处理成功：文件 '{filename}' - 拍摄时间：{time}, 原始位置：{location.address}, 重排序后位置：{reordered_address}")
+                print(f"处理成功：文件 '{filename}'- 拍摄时间：{time}, 原始位置：{location.address}, 重排序后位置：{reordered_address}")
             else:
                 print(f"警告：文件 '{filename}' 没有有效的GPS信息。")
         except Exception as e:

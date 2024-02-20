@@ -28,7 +28,11 @@ Use `pip install -r requirements.txt` to install the required libraries.
 ## Usage
 1. Ensure all images are located in the `images` directory.
 2. Execute the script, it will automatically create a directory named `tagged_images` and will save the new images with timestamps and addresses in this directory.
-3. In case of any processing failure, the script will attempt to retry automatically.
+3. In case of any processing failure, 
+
+### Change Font
+- Place the font file into the `font` folder.
+- Update the `font_path` in the code to the path of the new font.
 
 ## Troubleshooting
 Should any issues arise during the image processing, such as failure to read EXIF information or errors in address resolution, verify the integrity of your image files and ensure there is a stable network connection.

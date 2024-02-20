@@ -160,7 +160,7 @@ if not os.path.exists(tagged_folder_path):
     os.makedirs(tagged_folder_path)
 
 # 初始化失败图片列表
-failed_images = []    # 在这里添加这行代码
+failed_images = []
 
 for filename in os.listdir(folder_path):
     if filename.lower().endswith('.jpg'):

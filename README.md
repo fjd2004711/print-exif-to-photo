@@ -6,8 +6,7 @@
 该脚本可以从图片中读取EXIF信息，提取拍摄时间和GPS坐标，并使用这些数据获取详细的地址信息。然后，它会将这些信息添加到图片上，并保存带有地理位置标签和时间戳的新图片。
 
 ## 示例图片
-![1](https://github.com/fjd2004711/print-exif-to-photo/blob/main/Sample%20image/1.jpg)
-![2](https://github.com/fjd2004711/print-exif-to-photo/blob/main/Sample%20image/2.jpg)
+![1](https://github.com/fjd2004711/print-exif-to-photo/blob/main/Sample%20image/1.jpg)  ![2](https://github.com/fjd2004711/print-exif-to-photo/blob/main/Sample%20image/2.jpg)
 
 
 ## 功能

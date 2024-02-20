@@ -1,12 +1,18 @@
 import os
+import random
+import string
 from PIL import Image, ImageDraw, ImageFont
 from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
 from datetime import datetime
 import piexif
 
-# 创建一个geolocator对象
-geolocator = Nominatim(user_agent="geo_tagging_app")
+# 创建新的user_agent函数
+def generate_user_agent():
+    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
 
+# 初始化 geolocator
+geolocator = Nominatim(user_agent=generate_user_agent())
 
 def dms_to_dd(dms, ref):
     degrees = dms[0][0] / dms[0][1]
@@ -93,82 +99,117 @@ def format_time(time_str):
         return "时间未知"
 
 
-def add_text_to_image(img_path, time, address, font_path='msyh.ttc', font_size=48):
+def add_text_to_image(img_path, time, address, font_path='msyh.ttc', spacing=10):
     # 加载图片
     img = Image.open(img_path)
     draw = ImageDraw.Draw(img)
 
-    # 设置字体
+    # 设置边距
+    margin = int(img.width * 0.05)  # 例如图片宽度的1%
+    font_size = int((img.width / 1920) * 48)  # 调整基准字体大小
+    font_size = max(font_size, 20)  # 保证最小字体大小
     font = ImageFont.truetype(font_path, font_size)
 
     # 格式化时间和地址
     time_formatted = format_time(time)
-    # 删除地址末尾的逗号
     address_formatted = address.rstrip(', 中国')
 
     # 组合文本
     text = f"{time_formatted}\n{address_formatted}"
 
-    # 使用textbbox获取每行文本的边界框，计算总文本大小
-    text_lines = text.split('\n')
-    max_width = 0
-    total_height = 0
-    for line in text_lines:
-        line_bbox = draw.textbbox((0, 0), line, font=font)
-        line_width = line_bbox[2] - line_bbox[0]
-        line_height = line_bbox[3] - line_bbox[1]
-        max_width = max(max_width, line_width)
-        total_height += line_height
-
-    # 设置边距大小
-    margin_percentage = 0.05
-    x_margin = img.width * margin_percentage
-    y_margin = img.height * margin_percentage
+    # 预计算每行文本的高度
+    lines = text.split('\n')
+    text_height = 0
+    text_widths = []
+    line_heights = []
+    for line in lines:
+        bbox = draw.textbbox((0, 0), line, font=font)
+        text_widths.append(bbox[2] - bbox[0])
+        line_height = bbox[3] - bbox[1]
+        line_heights.append(line_height)
+        text_height += line_height
 
     # 文本在图片上的x和y坐标（右下角）
-    text_x = img.width - max_width - x_margin
-    text_y = img.height - total_height - y_margin - font_size * (len(text_lines) - 1)  # 减去行高
+    text_y = img.height - margin - text_height
 
-    # 阴影的颜色和变量
+    # 阴影颜色和偏移
     shadow_color = "black"
     shadow_offset = 2
 
-    # 绘制文本阴影和前景
-    for line in text_lines:
-        # 绘制阴影文本
-        shadow_position = (text_x + shadow_offset, text_y + shadow_offset)
-        draw.text(shadow_position, line, font=font, fill=shadow_color)
-        # 绘制前景文本
+    # 绘制每行文本
+    for i, line in enumerate(lines):
+        line_width = text_widths[i]
+        line_height = line_heights[i] + spacing  # 增加额外的行间距
+        # 计算每行的x坐标以保持右对齐
+        text_x = img.width - margin - line_width
+        # 绘制阴影部分
+        draw.text((text_x + shadow_offset, text_y + shadow_offset), line, font=font, fill=shadow_color)
+        # 绘制文本部分
         draw.text((text_x, text_y), line, font=font, fill="white")
-
-        # 更新y坐标为下一行的位置
-        line_bbox = draw.textbbox((text_x, text_y), line, font=font)
-        text_y += line_bbox[3] - line_bbox[1] + font_size  # 加上行高
+        # 下一行y坐标
+        text_y += line_height
 
     return img
 
-
 # 设置图片文件夹路径
-folder_path = 'images'  # 替换为你的图片文件夹路径
+folder_path = 'images'    # 替换为你的图片文件夹路径
 tagged_folder_path = os.path.join(folder_path, 'tagged_images')
 
-# 确保目标文件夹存在
+# 创建标记图片的文件夹如果它不存在
 if not os.path.exists(tagged_folder_path):
     os.makedirs(tagged_folder_path)
 
-# 遍历图片文件夹中的图片文件
+# 初始化失败图片列表
+failed_images = []    # 在这里添加这行代码
+
 for filename in os.listdir(folder_path):
     if filename.lower().endswith('.jpg'):
         img_path = os.path.join(folder_path, filename)
         try:
             time, lat, lon = get_exif_data(img_path)
             if lat and lon:
-                location = geolocator.reverse((lat, lon), language='zh')
+                try:
+                    location = geolocator.reverse((lat, lon), language='zh')
+                except GeocoderTimedOut as e:
+                    print(f"警告：文件'{filename}'处理失败，原因: 请求超时。")
+                    failed_images.append(filename)
+                    continue
+
                 reordered_address = reorder_address(location.address)
-                img_with_text = add_text_to_image(img_path, time, reordered_address)  # 添加文本到图片
-                img_with_text.save(os.path.join(tagged_folder_path, filename))  # 保存带标签的图片
+                img_with_text = add_text_to_image(img_path, time, reordered_address)
+                # 设置带有标签的图片的保存路径
+                img_with_text.save(os.path.join(tagged_folder_path, filename))
                 print(f"处理成功：文件 '{filename}'- 拍摄时间：{time}, 原始位置：{location.address}, 重排序后位置：{reordered_address}")
             else:
                 print(f"警告：文件 '{filename}' 没有有效的GPS信息。")
         except Exception as e:
-            print(f"错误：处理文件 '{filename}' 时出现问题 - {e}")
+            print(f"错误：处理文件 '{filename}' 时出现问题 - {str(e)}")
+            failed_images.append(filename)
+
+# 重试处理失败的图片
+if failed_images:
+    print("正在重试处理失败的图片...")
+    user_agent = generate_user_agent()
+    geolocator = Nominatim(user_agent=user_agent)
+    print(f"更新user_agent至: '{user_agent}'")
+
+    for filename in failed_images:
+        img_path = os.path.join(folder_path, filename)
+        try:
+            time, lat, lon = get_exif_data(img_path)
+            if lat and lon:
+                try:
+                    location = geolocator.reverse((lat, lon), language='zh')
+                except GeocoderTimedOut as e:
+                    print(f"重新处理失败：文件'{filename}'，原因: 请求超时。")
+                    continue
+
+                reordered_address = reorder_address(location.address)
+                img_with_text = add_text_to_image(img_path, time, reordered_address)
+                # 设置带有标签的图片的保存路径
+                img_with_text.save(os.path.join(tagged_folder_path, filename))
+                print(f"重新处理成功：文件 '{filename}'")
+            else:
+                print(f"警告：文件 '{filename}' 在重新处理中没有有效的GPS信息。")
+        except Exception as e:
+            print(f"重新处理错误：处理文件 '{filename}' 时出现问题 - {str(e)}")

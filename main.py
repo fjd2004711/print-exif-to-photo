@@ -103,7 +103,7 @@ def add_text_to_image(img_path, time, address, font_path='msyh.ttc', spacing=10)
     draw = ImageDraw.Draw(img)
 
     # 设置边距
-    margin = int(img.width * 0.05)  # 例如图片宽度的1%
+    margin = int(img.width * 0.05)  # 例如图片宽度的5%
     font_size = int((img.width / 1920) * 48)  # 调整基准字体大小
     font_size = max(font_size, 20)  # 保证最小字体大小
     font = ImageFont.truetype(font_path, font_size)

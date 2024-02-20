@@ -26,7 +26,6 @@ def dms_to_dd(dms, ref):
 
 
 def get_exif_data(img_path):
-    # 在此处初始化变量，以防EXIF数据不存在
     time = "Unknown"
     lat = None
     lon = None
@@ -58,7 +57,6 @@ def get_exif_data(img_path):
 def reorder_address(address):
     address_parts = [part.strip() for part in address.split(',')]
 
-    # 初始化各个组成部分
     autonomous_region = ''
     province_or_city = ''
     city = ''

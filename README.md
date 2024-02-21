@@ -39,7 +39,7 @@
 - 修改代码中 `font_path` 的字体路径。
 
 ### 详细使用教程
-[blog.renetxi.com](blog.renetxi.com)
+[blog.renetxi.com](https://blog.renetxi.com/archives/866)
 
 ## 故障排除
 如果在图片处理过程中遇到任何问题，如EXIF信息读取失败或地址解析错误，请检查您的图片文件是否损坏，以及网络连接是否正常。

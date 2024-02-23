@@ -69,18 +69,21 @@ def reorder_address(address):
     for part in address_parts:
         if '自治区' in part and not autonomous_region:
             autonomous_region = part
-        elif ('省' in part or '市' in part) and part.endswith('市'):
-            city = part
-        elif '市' in part and not province_or_city:
+        elif '省' in part and not province_or_city:
             province_or_city = part
-        elif any(sub in part for sub in ['县', '区']) and not county:
+        elif '市' in part:
+            if part.endswith('市') and not city:
+                city = part  # 首先找到的“市”为最主要的“市”，并赋值给city
+        elif '县' in part and not county:
             county = part
-        elif any(sub in part for sub in ['街道', '乡', '镇']) and not district:
+        elif '区' in part and not district:
             district = part
-        elif any(sub in part for sub in ['路', '街', '巷']) and not street:
+        elif any(sub in part for sub in ['街道', '乡', '镇']) and not street:
             street = part
+        elif any(sub in part for sub in ['路', '街', '巷']):
+            specific = specific + ', ' + part if specific else part
         else:
-            specific += part if not specific else ', ' + part
+            specific = specific + ', ' + part if specific else part
 
     # 根据中国的地址习惯进行排列，优先级从高到低
     reordered_parts = filter(None, [autonomous_region, province_or_city, city, county, district, street, specific])
@@ -97,7 +100,7 @@ def format_time(time_str):
         return "时间未知"
 
 
-def add_text_to_image(img_path, time, address, font_path='msyh.ttc', spacing=10):
+def add_text_to_image(img_path, time, address, font_path='msyh.ttc', spacing=30):   #msyh.ttc
     # 加载图片
     img = Image.open(img_path)
     draw = ImageDraw.Draw(img)

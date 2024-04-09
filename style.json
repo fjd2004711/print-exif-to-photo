@@ -1,7 +1,4 @@
 {
-  "show_camera_model": true,
-  "show_aperture": true,
-  "show_focal_length": true,
   "font_path": "msyh.ttc",
   "margin_scale": 0.05,
   "font_size_scale_landscape": 48,

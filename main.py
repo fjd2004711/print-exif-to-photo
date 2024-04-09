@@ -3,12 +3,12 @@ import sys
 import shutil
 import time
 from PIL import Image
-from geolocation import geolocator, is_nominatim_online, reverse_geocode
-from utils import generate_user_agent
-from exif_utils import get_exif_data
-from image_utils import rotate_image_based_on_exif, add_text_to_image
-from address_utils import reorder_address
-from config_utils import load_config
+from lib.geolocation import geolocator, is_nominatim_online, reverse_geocode
+from lib.utils import generate_user_agent
+from lib.exif_utils import get_exif_data
+from lib.image_utils import rotate_image_based_on_exif, add_text_to_image
+from lib.address_utils import reorder_address
+
 
 def main():
     folder_path = 'images'  # 替换为你的图片文件夹路径

@@ -44,7 +44,7 @@
 ### 更改字体及样式
 
 - 将字体文件放入 `fonts`  文件夹。
-- 修改`style.json`中 `font_path` 的字体路径。 （例如`fonts/example.ttf`，默认为`msyh.ttc`[微软雅黑] ）
+- 修改`config/style.json`中 `font_path` 的字体路径。 （例如`fonts/example.ttf`，默认为`msyh.ttc`[微软雅黑] ）
 
 #### 配置文件说明
 

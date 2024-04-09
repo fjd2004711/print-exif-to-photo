@@ -47,7 +47,7 @@ Use the command `pip install -r requirements.txt` to install these libraries.
 ### Changing Fonts and Styles
 
 - Add font files to the `fonts` folder.
-- Update the `font_path` in `style.json` to the desired font path (e.g., `fonts/example.ttf`; the default is `msyh.ttc`
+- Update the `font_path` in `config/style.json` to the desired font path (e.g., `fonts/example.ttf`; the default is `msyh.ttc`
   for Microsoft YaHei).
 
 #### Configuration File Description

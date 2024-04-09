@@ -19,6 +19,7 @@
 
 - Python版本: 3.7 或更高
 - 操作系统: Windows, macOS, Linux
+- 国内用户需要代理环境
 
 ## 安装要求
 运行此脚本需要安装以下Python模块：

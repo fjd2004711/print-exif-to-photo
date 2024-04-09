@@ -1,0 +1,11 @@
+{
+    "font_path": "msyh.ttc",
+    "margin_scale": 0.05,
+    "font_size_scale_landscape": 48,
+    "font_size_scale_portrait": 64,
+    "min_font_size": 20,
+    "shadow_color": "black",
+    "shadow_offset": 2,
+    "text_color": "white",
+    "spacing": 30
+}

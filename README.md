@@ -35,9 +35,21 @@
 2. 运行脚本，它会自动创建一个名为 `tagged_images` 的文件夹，并在其中保存标记了时间戳和地址的新图片。
 3. 如果处理失败，脚本会自动重试。
 
-### 更改字体
-- 将字体文件放入 `font`  文件夹。
-- 修改代码中 `font_path` 的字体路径。
+### 更改字体及样式
+- 将字体文件放入 `fonts`  文件夹。
+- 修改`style.json`中 `font_path` 的字体路径。 （例如`fonts/example.ttf`，默认为`msyh.ttc`[微软雅黑] ）
+
+#### 配置文件说明
+- `font_path`: 使用的字体文件的路径。
+- `margin_scale`: 边距比例，定义为图片宽度的一部分。
+- `font_size_scale_landscape`: 横向图片的字体大小缩放因子。
+- `font_size_scale_portrait`: 纵向图片的字体大小缩放因子。
+- `min_font_size`: 文本的最小字体大小。
+- `shadow_color`: 文本阴影的颜色。
+- `shadow_offset`: 文本阴影的偏移量（以像素为单位）。
+- `text_color`: 文本的颜色。
+- `spacing`: 行间距，即行与行之间的垂直距离。
+
 
 ### 详细使用教程
 [blog.renetxi.com](https://blog.renetxi.com/archives/866)

@@ -4,8 +4,11 @@ import shutil
 import time
 from PIL import Image
 from geolocation import geolocator, is_nominatim_online, reverse_geocode
-from image_processing import rotate_image_based_on_exif, get_exif_data, add_text_to_image, reorder_address
-from utils import generate_user_agent  # 从 utils.py 导入 generate_user_agent 函数
+from utils import generate_user_agent
+from exif_utils import get_exif_data
+from image_utils import rotate_image_based_on_exif, add_text_to_image
+from address_utils import reorder_address
+from config_utils import load_config
 
 def main():
     folder_path = 'images'  # 替换为你的图片文件夹路径
@@ -85,6 +88,7 @@ def main():
         print("以下文件处理失败:")
         for failed_image in failed_images:
             print(failed_image)
+
 
 if __name__ == "__main__":
     main()

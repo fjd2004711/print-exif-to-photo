@@ -5,6 +5,7 @@ from utils import generate_user_agent
 
 geolocator = Nominatim(user_agent=generate_user_agent())
 
+
 def reverse_geocode(geolocator, lat, lon):
     attempt = 0
     location = None
@@ -19,6 +20,7 @@ def reverse_geocode(geolocator, lat, lon):
             print(f"请求地理编码服务时发生错误: {e}")
             break
     return location
+
 
 def is_nominatim_online(geolocator, timeout=10):
     print("正在检查Nominatim服务状态...")

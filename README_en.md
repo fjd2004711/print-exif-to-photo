@@ -37,7 +37,7 @@ Use the command `pip install -r requirements.txt` to install these libraries.
 
 ## How to Use
 
-**This is the `command line` version of the project. We have built an `EXE` executable file for you to use directly, or you can switch to the [GUI branch](https://github.com/fjd2004711/print-exif-to-photo/tree/GUI) to build the project.**
+**This is the `command line` version of the project. We have built an `EXE` executable file for you to [use directly](https://github.com/fjd2004711/print-exif-to-photo/releases), or you can switch to the [GUI branch](https://github.com/fjd2004711/print-exif-to-photo/tree/GUI) to build the project.**
 
 1. Ensure all images are placed in the `images` folder.
 2. Run the script:

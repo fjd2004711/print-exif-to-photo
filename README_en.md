@@ -1,12 +1,10 @@
 # Print EXIF Information onto Photos
 
-[Simplified Chinese](README.md) | **English**
+**English** | [简体中文](README.md)
 
 ## Introduction
 
-This script can read EXIF information from photos, extract the shooting time and GPS coordinates, and use this data to
-obtain detailed address information. It then adds this information onto the photos, saving new images with geographic
-location tags and timestamps.
+This script can read EXIF information from photos, extract the shooting time and GPS coordinates, and use this data to obtain detailed address information. It then adds this information onto the photos, saving new images with geographic location tags and timestamps.
 
 ## Sample Image
 
@@ -39,16 +37,20 @@ Use the command `pip install -r requirements.txt` to install these libraries.
 
 ## How to Use
 
-1. Place all images into the `images` folder.
-2. Run the script; it will automatically create a folder named `tagged_images` and save new images with timestamps and
-   addresses inside.
+**This is the `command line` version of the project. We have built an `EXE` executable file for you to use directly, or you can switch to the [GUI branch](https://github.com/fjd2004711/print-exif-to-photo/tree/GUI) to build the project.**
+
+1. Ensure all images are placed in the `images` folder.
+2. Run the script:
+    ```
+   python main.py
+   ```
+    It will automatically create a folder named `tagged_images` and save new images with timestamps and addresses inside.
 3. If processing fails, the script will automatically retry.
 
 ### Changing Fonts and Styles
 
 - Add font files to the `fonts` folder.
-- Update the `font_path` in `config/style.json` to the desired font path (e.g., `fonts/example.ttf`; the default is `msyh.ttc`
-  for Microsoft YaHei).
+- Update the `font_path` in `config/style.json` to the desired font path (e.g., `fonts/example.ttf`; the default is `msyh.ttc` for Microsoft YaHei).
 
 #### Configuration File Description
 
@@ -68,8 +70,7 @@ For a detailed usage tutorial, visit [blog.renetxi.com](https://blog.renetxi.com
 
 ## Troubleshooting
 
-If you encounter any issues such as EXIF information not being read or address resolution errors, check whether your
-image files are corrupted and your network connection is functioning properly.
+If you encounter any issues such as EXIF information not being read or address resolution errors, check whether your image files are corrupted and your network connection is functioning properly.
 
 ## Contributions
 
@@ -77,4 +78,5 @@ For suggestions for improvements or feature requests, please create an issue or 
 
 ## License
 
-This project is licensed under the GPL-3.0 license. For more details, see the `LICENSE` file.
+This project is licensed under the GPL-3.0 license. For more details, see the `LICENSE` file.  
+

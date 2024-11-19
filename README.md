@@ -36,9 +36,13 @@
 请使用 `pip install -r requirements.txt` 来安装所需的库。
 
 ## 使用方法
-
+**这是此项目的`命令行`版本，我们已为您构建了`EXE`可执行文件，您可以直接下载使用,或切换到 [GUI分支](https://github.com/fjd2004711/print-exif-to-photo/tree/GUI) 构建项目。**
 1. 确保所有的图片都放在 `images` 文件夹中。
-2. 运行脚本，它会自动创建一个名为 `tagged_images` 的文件夹，并在其中保存标记了时间戳和地址的新图片。
+2. 运行脚本:
+```
+python main.py
+```
+它会自动创建一个名为 `tagged_images` 的文件夹，并在其中保存标记了时间戳和地址的新图片。
 3. 如果处理失败，脚本会自动重试。
 
 ### 更改字体及样式

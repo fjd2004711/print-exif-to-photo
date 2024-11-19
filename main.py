@@ -24,7 +24,7 @@ total_image_count = 0
 failed_images_info = []
 processing_images_count = 0
 failed_images_count = 0
-no_exif_images_count = 0
+no_exif_images_count = 0  # 初始化变量
 
 def log_to_gui(message):
     result_text.insert('end', message + '\n')
@@ -32,6 +32,12 @@ def log_to_gui(message):
 
 def main(input_folder_path, output_folder_path):
     global current_image_index, total_image_count, processing_images_count, failed_images_count, no_exif_images_count
+    current_image_index = 0
+    total_image_count = 0
+    processing_images_count = 0
+    failed_images_count = 0
+    no_exif_images_count = 0  # 初始化变量
+
     tagged_folder_path = os.path.join(output_folder_path, 'tagged_images')
     no_exif_folder_path = os.path.join(output_folder_path, 'no_exif_images')
     failed_folder_path = os.path.join(output_folder_path, 'failed_images')
@@ -42,7 +48,7 @@ def main(input_folder_path, output_folder_path):
     # 初始化失败图片列表
     failed_images = []
 
-    # 检查Nominatim服务状态
+    # 检查Nominatim服务状��
     check_start_time = time.time()
     nominatim_status = is_nominatim_online(geolocator)
     check_end_time = time.time()
@@ -79,6 +85,7 @@ def main(input_folder_path, output_folder_path):
     return nominatim_status
 
 def process_image(img_path, filename, tagged_folder_path, no_exif_folder_path):
+    global no_exif_images_count  # 确保在函数中使用全局变量
     img_start_time = time.time()
     time_stamp, lat, lon = get_exif_data(img_path)
     if lat and lon:
@@ -99,13 +106,13 @@ def process_image(img_path, filename, tagged_folder_path, no_exif_folder_path):
         log_to_gui(f"没有EXIF信息：{filename}")
         no_exif_img_path = os.path.join(no_exif_folder_path, f'no_exif_{filename}')
         copy_file(img_path, no_exif_img_path)
-        no_exif_images_count += 1
+        no_exif_images_count += 1  # 更新无EXIF信息图片��计数
     img_end_time = time.time()
     log_to_gui(f"文件 '{filename}' 处理耗时 {img_end_time - img_start_time:.2f}秒")
 
 def handle_geolocation_error(e, img_path, filename, tagged_folder_path, lat, lon, time_stamp):
     if 'HTTPSConnectionPool' in str(e):
-        log_to_gui(f"更换user_agent后重试: {filename}")
+        log_to_gui(f"重试使用新的user_agent：{filename}")
         geolocator.headers['User-Agent'] = generate_user_agent()
         location = reverse_geocode(geolocator, lat, lon)
         if location:
@@ -116,7 +123,7 @@ def handle_geolocation_error(e, img_path, filename, tagged_folder_path, lat, lon
             img_with_text.save(os.path.join(tagged_folder_path, filename))
             log_to_gui(f"重试成功：文件 '{filename}'")
         else:
-            raise ValueError("重试后依然无法获取地理位置信息")
+            raise ValueError("重试失败，无法获取地理位置信息")
     else:
         raise
 
@@ -125,7 +132,7 @@ def select_input_folder():
     input_folder_path = select_folder()
     if input_folder_path:
         input_folder_path_label.config(text=f"输入文件夹：{input_folder_path}")
-        log_to_gui(f"选择了输入文件夹：{input_folder_path}")
+        log_to_gui(f"选择的输入文件夹：{input_folder_path}")
         return input_folder_path
     return None
 
@@ -134,7 +141,7 @@ def select_output_folder():
     output_folder_path = select_folder()
     if output_folder_path:
         output_folder_path_label.config(text=f"输出文件夹：{output_folder_path}")
-        log_to_gui(f"选择了输出文件夹：{output_folder_path}")
+        log_to_gui(f"选择的输出文件夹：{output_folder_path}")
         return output_folder_path
     return None
 
@@ -157,17 +164,17 @@ def process_images(input_folder_path, output_folder_path):
         if nominatim_status:
             update_progress_bar(1)
             log_to_gui("处理完成。")
-            log_to_gui(f"共处理图片 {total_image_count} 张，其中：")
-            log_to_gui(f"    - 处理成功：{total_image_count - failed_images_count - no_exif_images_count} 张")
-            log_to_gui(f"    - 处理失败：{failed_images_count} 张")
-            log_to_gui(f"    - 无EXIF信息：{no_exif_images_count} 张")
+            log_to_gui(f"总共处理图片：{total_image_count}，其中：")
+            log_to_gui(f"    - 处理成功：{total_image_count - failed_images_count - no_exif_images_count}")
+            log_to_gui(f"    - 处理失败：{failed_images_count}")
+            log_to_gui(f"    - 无EXIF信息：{no_exif_images_count}")
             if failed_images_info:
-                log_to_gui("部分图片处理失败，可尝试重新处理。")
+                log_to_gui("部分图片处理失败，可以尝试重新处理。")
         else:
             log_to_gui("Nominatim服务不可用，处理停止。")
     except Exception as e:
-        log_to_gui(f"在处理图片过程中发生错误: {e}")
-        show_error("处理图片出错", f"在处理图片过程中发生错误: {e}")
+        log_to_gui(f"处理图片时发生错误：{e}")
+        show_error("图片处理错误", f"处理图片时发生错误：{e}")
 
 def update_progress_bar(value):
     progress_bar['value'] = value * 100
@@ -181,7 +188,7 @@ def retry_failed_images():
         failed_images_count = 0
         no_exif_images_count = 0
         threading.Thread(target=process_failed_images).start()
-        log_to_gui("开始重试失败图片...")
+        log_to_gui("重试处理失败的图片...")
 
 def process_failed_images():
     global current_image_index, total_image_count, failed_images_info, processing_images_count, failed_images_count, no_exif_images_count
@@ -189,13 +196,17 @@ def process_failed_images():
     for filename, error_info in failed_images_info:
         img_path = os.path.join(input_folder_path, filename)
         try:
-            process_image(img_path, filename, os.path.join(output_folder_path, 'tagged_images'), os.path.join(output_folder_path, 'no_exif_images'))
+            process_image(img_path, filename, os.path.join(output_folder_path, 'tagged_images'),
+                          os.path.join(output_folder_path, 'no_exif_images'))
         except Exception as e:
             log_to_gui(f"处理文件 '{filename}' 时发生错误 - {e}")
             new_failed_images_info.append((filename, e))
         current_image_index += 1
         processing_images_count += 1
         update_progress_bar(current_image_index / total_image_count)
+
+    failed_images_count = len(new_failed_images_info)  # 更新失败图片的数目
+
     if new_failed_images_info:
         show_info("重试结果", "部分图片重试处理仍失败，请检查。")
         log_to_gui(f"共重试处理 {len(failed_images_info)} 张失败图片，其中：")
@@ -203,13 +214,15 @@ def process_failed_images():
         log_to_gui(f"    - 重试失败：{len(new_failed_images_info)} 张")
     else:
         show_info("重试结果", "所有失败图片重试处理成功。")
-        log_to_gui("所有失败图片重试处理���功。")
+        log_to_gui("所有失败图片重试处理成功。")
+
+    failed_images_info = new_failed_images_info  # 更新全局失败图片信息
 
 root = Tk()
 root.title("图片EXIF信息处理工具")
 root.geometry("500x700")
 
-# 结果文本框及垂直滚动条设置
+# 结果文本框和垂直滚动条设置
 result_text = Text(root, bg='white')
 result_text.pack(fill='both', expand=True)
 
@@ -217,7 +230,7 @@ scrollbar = Scrollbar(root, command=result_text.yview)
 scrollbar.pack(side='right', fill='y')
 result_text.config(yscrollcommand=scrollbar.set)
 
-# 选择输入文件夹和输出文件夹的按钮及路径显示设置
+# 输入和输出文件夹选择按钮和路径显示设置
 input_select_button = Button(root, text="选择图片文件夹", command=select_input_folder)
 input_select_button.pack(pady=5)
 
@@ -242,8 +255,8 @@ progress_bar.pack(pady=10)
 retry_button = Button(root, text="重试失败图片", command=retry_failed_images)
 retry_button.pack(pady=10)
 
-# 添加GitHub图标及链接功能
-github_icon_image = Image.open("github_icon.png")
+# 添加GitHub图标和链接功能
+github_icon_image = Image.open("assets/github_icon.png")
 github_icon_image = github_icon_image.resize((32, 32))
 github_icon = ImageTk.PhotoImage(github_icon_image)
 

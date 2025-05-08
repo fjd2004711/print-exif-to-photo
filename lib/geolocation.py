@@ -1,42 +1,65 @@
+import requests
+import json
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
-import time
 from .utils import generate_user_agent
+
+# 读取配置文件
+try:
+    with open('config/config.json', 'r', encoding='utf-8') as config_file:
+        config = json.load(config_file)
+    AMAP_API_KEY = config.get('amap_api_key', '')
+except FileNotFoundError:
+    print("未找到配置文件 config/config.json，请检查。")
+    AMAP_API_KEY = ''
+except json.JSONDecodeError:
+    print("配置文件 config/config.json 格式错误，请检查。")
+    AMAP_API_KEY = ''
 
 geolocator = Nominatim(user_agent=generate_user_agent())
 
-
-def reverse_geocode(geolocator, lat, lon):
-    attempt = 0
-    location = None
-    while attempt < 3:  # 重试3次
-        try:
-            location = geolocator.reverse((lat, lon), language='zh', timeout=10)  # 超时设置为10秒
-            break
-        except GeocoderTimedOut:
-            attempt += 1
-            time.sleep(5)  # 等待5秒后重试
-        except Exception as e:
-            print(f"请求地理编码服务时发生错误: {e}")
-            break
-    return location
-
-
-def is_nominatim_online(geolocator, timeout=10):
-    print("正在检查Nominatim服务状态...")
+def is_nominatim_online():
     try:
-        # 在地理编码之前暂停1秒，遵守请求限制
-        time.sleep(1)
-        location = geolocator.geocode("Eiffel Tower", timeout=timeout)
-        if location:
-            print("Nominatim 服务状态: 服务在线")
-            return True
-        else:
-            print("Nominatim 服务状态: 未找到位置信息，服务可能存在问题。")
-            return False
-    except GeocoderTimedOut:
-        print("Nominatim 服务状态: 请求超时。")
+        geolocator.geocode("test")
+        return True
+    except Exception:
         return False
+
+def reverse_geocode_nominatim(lat, lon):
+    try:
+        location = geolocator.reverse(f"{lat}, {lon}", language='zh-CN')
+        return location
     except Exception as e:
-        print(f"Nominatim 服务状态: 遇到异常 - {e}")
-        return False
+        print(f"使用 Nominatim 进行地址解析时发生错误: {e}")
+        return None
+
+def reverse_geocode_amap(lat, lon):
+    url = 'https://restapi.amap.com/v3/geocode/regeo'
+    params = {
+        'key': AMAP_API_KEY,
+        'location': f'{lon},{lat}',
+        'radius': 1000,
+        'extensions': 'base',
+        'batch': False,
+        'roadlevel': 0
+    }
+    headers = {
+        'User-Agent': generate_user_agent()
+    }
+    try:
+        response = requests.get(url, params=params, headers=headers)
+        response.raise_for_status()
+        result = response.json()
+        if result['status'] == '1' and result['regeocode']:
+            address = result['regeocode']['formatted_address']
+            return type('Location', (object,), {'address': address})()
+        else:
+            return None
+    except requests.RequestException as e:
+        print(f"请求高德地图 API 时发生错误: {e}")
+        return None
+
+def reverse_geocode(lat, lon, use_amap=False):
+    if use_amap:
+        return reverse_geocode_amap(lat, lon)
+    else:
+        return reverse_geocode_nominatim(lat, lon)

@@ -17,12 +17,12 @@
 - 将时间戳和地址添加到图片上
 - 支持中文地址格式
 - 自动重试和处理失败的操作
+- 支持 高德地图API 和 Nominatim API
 
 ## 环境要求
 
 - Python版本: 3.7 或更高
 - 操作系统: Windows, macOS, Linux
-- 国内用户需要代理环境
 
 ## 安装要求
 
@@ -32,13 +32,15 @@
 - `geopy`
 - `piexif`
 - `datetime`
+- `requests`
 
 请使用 `pip install -r requirements.txt` 来安装所需的库。
 
 ## 使用方法
 **这是此项目的`命令行`版本，我们已为您构建了`EXE`可执行文件，您可以直接 [下载使用](https://github.com/fjd2004711/print-exif-to-photo/releases)，或切换到 [GUI分支](https://github.com/fjd2004711/print-exif-to-photo/tree/GUI) 构建项目。**
 1. 确保所有的图片都放在 `images` 文件夹中。
-2. 运行脚本:
+2. 在config/config.json中配置API密钥（如果使用高德地图API）。
+3运行脚本:
 ```
 python main.py
 ```

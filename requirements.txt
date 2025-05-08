@@ -1,3 +1,4 @@
 Pillow
 geopy
 piexif
+requests

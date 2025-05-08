@@ -5,6 +5,9 @@ def get_exif_data(img_path):
     time_stamp = "未知"
     lat = None
     lon = None
+    aperture = "未知"
+    iso = "未知"
+    shutter_speed = "未知"
 
     with open(img_path, 'rb') as img_file:
         exif_dict = piexif.load(img_file.read())
@@ -30,4 +33,17 @@ def get_exif_data(img_path):
             gps_longitude_ref = gps_longitude_ref.decode('utf-8', 'ignore')
             lon = dms_to_dd(gps_longitude, gps_longitude_ref)
 
-    return time_stamp, lat, lon
+    if 'Exif' in exif_dict:
+        exif = exif_dict['Exif']
+        if piexif.ExifIFD.FNumber in exif:
+            aperture = f"f/{exif[piexif.ExifIFD.FNumber][0] / exif[piexif.ExifIFD.FNumber][1]}"
+        if piexif.ExifIFD.ISOSpeedRatings in exif:
+            iso = str(exif[piexif.ExifIFD.ISOSpeedRatings])
+        if piexif.ExifIFD.ExposureTime in exif:
+            exposure_time = exif[piexif.ExifIFD.ExposureTime]
+            if exposure_time[0] / exposure_time[1] < 1:
+                shutter_speed = f"1/{int(exposure_time[1] / exposure_time[0])}"
+            else:
+                shutter_speed = f"{exposure_time[0] / exposure_time[1]}s"
+
+    return time_stamp, lat, lon, aperture, iso, shutter_speed

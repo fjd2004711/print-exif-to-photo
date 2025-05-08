@@ -9,86 +9,91 @@ from lib.exif_utils import get_exif_data
 from lib.image_utils import rotate_image_based_on_exif, add_text_to_image
 from lib.address_utils import reorder_address
 
+class NoExifException(Exception):
+    pass
 
-def main():
-    folder_path = 'images'  # 替换为你的图片文件夹路径
-    tagged_folder_path = os.path.join(folder_path, 'tagged_images')
-    no_exif_folder_path = os.path.join(folder_path, 'no_exif_images')
-    failed_folder_path = os.path.join(folder_path, 'failed_images')
-
-    # 创建标记图片的文件夹如果它不存在
-    if not os.path.exists(tagged_folder_path):
-        os.makedirs(tagged_folder_path)
-    if not os.path.exists(no_exif_folder_path):
-        os.makedirs(no_exif_folder_path)
-    if not os.path.exists(failed_folder_path):
-        os.makedirs(failed_folder_path)
-
-    # 初始化失败图片列表
-    failed_images = []
-
-    # 检查 Nominatim 服务状态
-    check_start_time = time.time()
-    if not is_nominatim_online(geolocator):
-        print("Nominatim 服务当前不可用。请稍后重试。")
-        sys.exit(1)
-    check_end_time = time.time()
-    print(f"Nominatim 服务状态检查耗时：{check_end_time - check_start_time:.2f}秒。")
-
-    # 开始处理图片
-    for filename in os.listdir(folder_path):
-        if filename.lower().endswith('.jpg'):
-            img_path = os.path.join(folder_path, filename)
-            try:
-                img_start_time = time.time()  # 开始处理的时间
-                time_stamp, lat, lon = get_exif_data(img_path)
-                if lat and lon:
-                    try:
-                        location = reverse_geocode(geolocator, lat, lon)
-                        if location:
-                            reordered_address = reorder_address(location.address)
-                            img = Image.open(img_path)
-                            img = rotate_image_based_on_exif(img)
-                            img_with_text = add_text_to_image(img, time_stamp, reordered_address)
-                            img_with_text.save(os.path.join(tagged_folder_path, filename))
-                            print(f"处理成功：文件 '{filename}'")
-                        else:
-                            raise ValueError("无法获取地理位置信息")
-                    except Exception as e:
-                        if 'HTTPSConnectionPool' in str(e):
-                            print(f"更换user_agent后重试: {filename}")
-                            geolocator.headers['User-Agent'] = generate_user_agent()
-                            location = reverse_geocode(geolocator, lat, lon)
-                            if location:
-                                reordered_address = reorder_address(location.address)
-                                img = Image.open(img_path)
-                                img = rotate_image_based_on_exif(img)
-                                img_with_text = add_text_to_image(img, time_stamp, reordered_address)
-                                img_with_text.save(os.path.join(tagged_folder_path, filename))
-                                print(f"重试成功：文件 '{filename}'")
-                            else:
-                                raise ValueError("重试后依然无法获取地理位置信息")
-                        else:
-                            raise
+def process_image(img_path, amap_api_key, nominatim_api, font_size, print_position, user_folders, font_family='msyh.ttc', text_color='#ffffff', shadow_color='#000000', shadow_offset=2, spacing=30):
+    """
+    处理图片并保存到用户特定的文件夹
+    :param img_path: 原始图片路径
+    :param amap_api_key: 高德地图API密钥
+    :param nominatim_api: 是否使用Nominatim API
+    :param font_size: 字体大小
+    :param print_position: 水印位置
+    :param user_folders: 用户特定的文件夹路径字典
+    :param font_family: 字体文件名
+    :param text_color: 字体颜色
+    :param shadow_color: 阴影颜色
+    :param shadow_offset: 阴影粗细
+    :param spacing: 行间距
+    :return: None
+    """
+    try:
+        img_start_time = time.time()  # 开始处理的时间
+        time_stamp, lat, lon, exposure, iso, fnumber, make, model, lens = get_exif_data(img_path)
+        if not (lat and lon):
+            print(f"没有EXIF信息：{os.path.basename(img_path)}")
+            no_exif_img_path = os.path.join(user_folders['no_exif'], f'no_exif_{os.path.basename(img_path)}')
+            shutil.copy(img_path, no_exif_img_path)
+            raise NoExifException("没有EXIF信息")
+        try:
+            location = reverse_geocode(geolocator, lat, lon)
+            if location:
+                reordered_address = reorder_address(location.address)
+                img = Image.open(img_path)
+                img = rotate_image_based_on_exif(img)
+                # 拼接水印内容
+                info_lines = [
+                    time_stamp,
+                    reordered_address,
+                    f"{make} {model} {lens}".strip(),
+                    f"曝光:{exposure}  光圈:{fnumber}  ISO:{iso}".strip()
+                ]
+                info_text = '\n'.join([line for line in info_lines if line and line != '未知'])
+                img_with_text = add_text_to_image(
+                    img, info_text, '', font_size, print_position,
+                    font_family=font_family, text_color=text_color, shadow_color=shadow_color,
+                    shadow_offset=shadow_offset, spacing=spacing
+                )
+                # 保存到用户特定的tagged文件夹
+                output_path = os.path.join(user_folders['tagged'], os.path.basename(img_path))
+                img_with_text.save(output_path)
+                print(f"处理成功：文件 '{os.path.basename(img_path)}'")
+            else:
+                raise ValueError("无法获取地理位置信息")
+        except Exception as e:
+            if 'HTTPSConnectionPool' in str(e):
+                print(f"更换user_agent后重试: {os.path.basename(img_path)}")
+                geolocator.headers['User-Agent'] = generate_user_agent()
+                location = reverse_geocode(geolocator, lat, lon)
+                if location:
+                    reordered_address = reorder_address(location.address)
+                    img = Image.open(img_path)
+                    img = rotate_image_based_on_exif(img)
+                    info_lines = [
+                        time_stamp,
+                        reordered_address,
+                        f"{make} {model} {lens}".strip(),
+                        f"曝光:{exposure}  光圈:{fnumber}  ISO:{iso}".strip()
+                    ]
+                    info_text = '\n'.join([line for line in info_lines if line and line != '未知'])
+                    img_with_text = add_text_to_image(
+                        img, info_text, '', font_size, print_position,
+                        font_family=font_family, text_color=text_color, shadow_color=shadow_color,
+                        shadow_offset=shadow_offset, spacing=spacing
+                    )
+                    # 保存到用户特定的tagged文件夹
+                    output_path = os.path.join(user_folders['tagged'], os.path.basename(img_path))
+                    img_with_text.save(output_path)
+                    print(f"重试成功：文件 '{os.path.basename(img_path)}'")
                 else:
-                    print(f"没有EXIF信息：{filename}")
-                    no_exif_img_path = os.path.join(no_exif_folder_path, f'no_exif_{filename}')
-                    shutil.copy(img_path, no_exif_img_path)  # 标记没有EXIF信息的图片
-                    continue  # 跳过后续的异常处理
-                img_end_time = time.time()
-                print(f"文件 '{filename}' 处理耗时 {img_end_time - img_start_time:.2f}秒")
-            except Exception as e:
-                print(f"处理文件 '{filename}' 时发生错误 - {e}")
-                failed_images.append(filename)
-                failed_img_path = os.path.join(failed_folder_path, f'failed_{filename}')
-                shutil.copy(img_path, failed_img_path)  # 复制原始图片到failed_images文件夹并添加前缀
-
-    # 输出失败的图片
-    if failed_images:
-        print("以下文件处理失败:")
-        for failed_image in failed_images:
-            print(failed_image)
-
-
-if __name__ == "__main__":
-    main()
+                    raise ValueError("重试后依然无法获取地理位置信息")
+            else:
+                raise
+        img_end_time = time.time()
+        print(f"文件 '{os.path.basename(img_path)}' 处理耗时 {img_end_time - img_start_time:.2f}秒")
+    except Exception as e:
+        print(f"处理文件 '{os.path.basename(img_path)}' 时发生错误 - {e}")
+        # 复制到用户特定的failed文件夹
+        failed_img_path = os.path.join(user_folders['failed'], f'failed_{os.path.basename(img_path)}')
+        shutil.copy(img_path, failed_img_path)

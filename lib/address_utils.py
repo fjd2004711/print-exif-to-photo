@@ -1,6 +1,9 @@
 def reorder_address(address):
     address_parts = [part.strip() for part in address.split(',')]
 
+    def is_postcode(part):
+        return part.isdigit() and len(part) == 6
+
     autonomous_region = ''
     province_or_city = ''
     city = ''
@@ -10,6 +13,8 @@ def reorder_address(address):
     specific = ''
 
     for part in address_parts:
+        if '中国' in part or is_postcode(part):
+            continue  # 跳过"中国"和邮编
         if '自治区' in part and not autonomous_region:
             autonomous_region = part
         elif '省' in part and not province_or_city:
@@ -24,11 +29,11 @@ def reorder_address(address):
         elif any(sub in part for sub in ['街道', '乡', '镇']) and not street:
             street = part
         elif any(sub in part for sub in ['路', '街', '巷']):
-            specific = specific + ', ' + part if specific else part
+            specific = specific + ' ' + part if specific else part
         else:
-            specific = specific + ', ' + part if specific else part
+            specific = specific + ' ' + part if specific else part
 
-    # 过滤空值并拼接地址
+    # 过滤空值并拼接地址，使用空格分隔
     reordered_parts = filter(None, [autonomous_region, province_or_city, city, county, district, street, specific])
-    sorted_address = ', '.join(reordered_parts)
+    sorted_address = ' '.join(reordered_parts)
     return sorted_address

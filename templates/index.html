@@ -1,104 +1,583 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图片EXIF信息处理</title>
+    <title>EXIF信息处理工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            background-color: #f8f9fa;
+            padding: 0;
             margin: 0;
-            background-color: #f4f4f9;
         }
-
-        h1 {
-            color: #333;
+        .navbar {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100vw;
+            min-width: 100vw;
+            left: 0;
+            top: 0;
+            border-radius: 0 !important;
         }
-
-        form {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        .navbar .container {
+            margin: 0 !important;
+            padding: 0 !important;
+            max-width: 100vw;
+            width: 100vw;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
-        }
-
-        input[type="file"] {
-            margin-bottom: 10px;
-        }
-
-        button {
-            padding: 10px 20px;
-            background-color: #007BFF;
-            color: #fff;
             border: none;
-            border-radius: 4px;
+        }
+        .card-header {
+            background-color: #f1f8ff;
+            border-bottom: 1px solid #e3f2fd;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+        .progress {
+            height: 25px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            background-color: #0d6efd;
+        }
+        .nav-tabs {
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 15px;
+        }
+        .nav-tabs .nav-link {
+            border: none;
+            color: #495057;
+            padding: 10px 15px;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        .nav-tabs .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .tab-content {
+            padding: 20px;
+            background-color: white;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .progress-status, .card-body > div, .tab-content, .nav-tabs {
+            text-align: center !important;
+        }
+        .form-control {
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            padding: 10px;
+        }
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
-
-        button:hover {
-            background-color: #0056b3;
+        .drop-zone:hover {
+            border-color: #0d6efd;
+            background: #e9ecef;
         }
-
-        #result {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        .drop-zone.dragover {
+            border-color: #0d6efd;
+            background: #e9ecef;
+        }
+        .preview-image {
+            max-width: 150px;
+            max-height: 150px;
+            object-fit: cover;
+            margin: 5px;
+            border-radius: 5px;
+        }
+        .image-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
         }
     </style>
 </head>
-
 <body>
-    <h1>图片EXIF信息处理</h1>
-    <form id="uploadForm">
-        <input type="file" id="imageInput" accept="image/jpeg">
-        <button type="submit">处理图片</button>
-    </form>
-    <img id="result" src="#" alt="处理后的图片" style="display: none;">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">EXIF信息处理工具</a>
+        </div>
+    </nav>
 
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">上传图片</h5>
+                        <div class="drop-zone" id="dropZone">
+                            <i class="bi bi-cloud-upload fs-1"></i>
+                            <p class="mt-2">拖拽图片到这里或点击选择文件</p>
+                            <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+                        </div>
+                        <div class="image-container" id="previewContainer"></div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">处理设置</h5>
+                        <form id="processForm">
+                            <div class="mb-3">
+                                <label class="form-label">地址转换API</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="apiType" name="api_type">
+                                        <option value="nominatim">Nominatim (免费)</option>
+                                        <option value="amap">高德地图</option>
+                                    </select>
+                                    <span class="input-group-text">
+                                        <span class="api-status" id="apiStatus"></span>
+                                        <span id="apiStatusText">检查中...</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">API密钥</label>
+                                <input type="text" class="form-control" id="apiKey" name="api_key" placeholder="如果使用高德地图API，请在此输入密钥">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">字体选择</label>
+                                <select class="form-select" id="fontFamily" name="font_family">
+                                    <option value="msyh.ttc">微软雅黑</option>
+                                    <option value="SimHei.ttf">黑体</option>
+                                    <option value="SimSun.ttc">宋体</option>
+                                    <option value="arial.ttf">Arial</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">字体大小</label>
+                                <div class="input-group">
+                                    <input type="range" class="form-range" id="fontSize" name="font_size" min="10" max="300" value="20">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm ms-2" id="autoFontSizeBtn">自动</button>
+                                </div>
+                                <div class="text-center" id="fontSizeValue">20</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">水印颜色</label>
+                                <input type="color" class="form-control form-control-color" id="textColor" name="text_color" value="#ffffff">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">阴影颜色</label>
+                                <input type="color" class="form-control form-control-color" id="shadowColor" name="shadow_color" value="#000000">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">阴影粗细</label>
+                                <input type="range" class="form-range" id="shadowOffset" name="shadow_offset" min="0" max="8" value="2">
+                                <div class="text-center" id="shadowOffsetValue">2</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">行间距</label>
+                                <input type="range" class="form-range" id="spacing" name="spacing" min="10" max="60" value="30">
+                                <div class="text-center" id="spacingValue">30</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">水印显示</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="watermarkToggle" checked>
+                                    <label class="form-check-label" for="watermarkToggle">启用水印</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">水印位置</label>
+                                <div id="watermarkPosition" style="width: 100%; height: 300px; border: 1px dashed #ccc; position: relative;">
+                                    <div id="watermarkPreview" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.5); color: white; padding: 5px; border-radius: 5px; cursor: move;">
+                                        水印预览
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">水印位置</label>
+                                <select class="form-select" id="printPosition" name="print_position">
+                                    <option value="bottom-right">右下角</option>
+                                    <option value="bottom-left">左下角</option>
+                                    <option value="top-right">右上角</option>
+                                    <option value="top-left">左上角</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">时间戳格式</label>
+                                <select class="form-select" id="timestampFormat" name="timestamp_format">
+                                    <option value="%Y-%m-%d %H:%M:%S">YYYY-MM-DD HH:MM:SS</option>
+                                    <option value="%Y/%m/%d %H:%M">YYYY/MM/DD HH:MM</option>
+                                    <option value="%d-%m-%Y %H:%M">DD-MM-YYYY HH:MM</option>
+                                    <option value="%H:%M:%S %d/%m/%Y">HH:MM:SS DD/MM/YYYY</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="processBtn">开始处理</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">处理进度</h5>
+                        <div class="progress mb-3" style="display: none;" id="progressBar">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div id="progressStatus"></div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">处理结果</h5>
+                        <ul class="nav nav-tabs" id="resultTabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="success-tab" data-bs-toggle="tab" href="#success" role="tab">成功</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="failed-tab" data-bs-toggle="tab" href="#failed" role="tab">失败</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="no-exif-tab" data-bs-toggle="tab" href="#no-exif" role="tab">无EXIF</a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="resultTabsContent">
+                            <div class="tab-pane fade show active" id="success" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="failed" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="no-exif" role="tabpanel"></div>
+                        </div>
+                        <div class="d-grid gap-2 mt-3">
+                            <button class="btn btn-success" id="downloadBtn">下载所有处理结果</button>
+                            <button class="btn btn-danger" id="clearBtn">清理所有数据</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.2/dist/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        const uploadForm = document.getElementById('uploadForm');
-        const imageInput = document.getElementById('imageInput');
-        const resultImage = document.getElementById('result');
+        const socket = io();
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const processForm = document.getElementById('processForm');
+        const progressBar = document.getElementById('progressBar');
+        const progressStatus = document.getElementById('progressStatus');
+        const apiType = document.getElementById('apiType');
+        const apiStatus = document.getElementById('apiStatus');
+        const apiStatusText = document.getElementById('apiStatusText');
+        const fontSize = document.getElementById('fontSize');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const autoFontSizeBtn = document.getElementById('autoFontSizeBtn');
+        const shadowOffset = document.getElementById('shadowOffset');
+        const shadowOffsetValue = document.getElementById('shadowOffsetValue');
+        const spacing = document.getElementById('spacing');
+        const spacingValue = document.getElementById('spacingValue');
 
-        uploadForm.addEventListener('submit', async (e) => {
+        // 拖放功能
+        dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
 
-            const file = imageInput.files[0];
-            if (file) {
-                const formData = new FormData();
-                formData.append('image', file);
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
 
-                try {
-                    const response = await fetch('/process_image', {
-                        method: 'POST',
-                        body: formData
-                    });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
 
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        resultImage.src = url;
-                        resultImage.style.display = 'block';
-                    } else {
-                        const data = await response.json();
-                        alert(data.error);
-                    }
-                } catch (error) {
-                    alert('处理图片时发生错误：' + error.message);
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            previewContainer.innerHTML = '';
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'preview-image';
+                        img.title = file.name;
+                        img.style.opacity = '1';
+                        img.style.transition = 'opacity 0.3s ease';
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+                        previewContainer.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
                 }
-            } else {
-                alert('请选择一张图片');
+            });
+        }
+
+        // 字体大小自动按钮
+        autoFontSizeBtn.addEventListener('click', () => {
+            fontSize.value = 0;
+            fontSizeValue.textContent = '自动';
+        });
+
+        fontSize.addEventListener('input', (e) => {
+            fontSizeValue.textContent = e.target.value == 0 ? '自动' : e.target.value;
+        });
+
+        // 阴影粗细
+        shadowOffset.addEventListener('input', (e) => {
+            shadowOffsetValue.textContent = e.target.value;
+        });
+
+        // 行间距
+        spacing.addEventListener('input', (e) => {
+            spacingValue.textContent = e.target.value;
+        });
+
+        // API状态检查
+        function checkApiStatus() {
+            fetch(`/check-api?api_type=${apiType.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    apiStatus.className = `api-status ${data.status ? 'online' : 'offline'}`;
+                    apiStatusText.textContent = data.status ? '在线' : '离线';
+                })
+                .catch(error => {
+                    console.error('API 状态检查失败:', error);
+                    apiStatus.className = 'api-status offline';
+                    apiStatusText.textContent = '离线';
+                });
+        }
+
+        apiType.addEventListener('change', checkApiStatus);
+        checkApiStatus();
+
+        // 处理表单提交
+        processForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(processForm);
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                alert('请先选择图片');
+                return;
+            }
+
+            Array.from(files).forEach(file => {
+                formData.append('images', file);
+            });
+
+            // 追加自定义参数
+            formData.set('font_family', document.getElementById('fontFamily').value);
+            formData.set('text_color', document.getElementById('textColor').value);
+            formData.set('shadow_color', document.getElementById('shadowColor').value);
+            formData.set('shadow_offset', document.getElementById('shadowOffset').value);
+            formData.set('spacing', document.getElementById('spacing').value);
+
+            progressBar.style.display = 'block';
+            progressBar.querySelector('.progress-bar').style.width = '0%';
+            progressStatus.textContent = '处理中...';
+
+            try {
+                const response = await fetch('/process-images', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                progressStatus.textContent = `处理完成！成功：${result.success}，失败：${result.fail}，无EXIF：${result.no_exif}`;
+                updateResults();
+            } catch (error) {
+                progressStatus.textContent = `处理出错：${error.message}`;
             }
         });
+
+        // 实时进度更新
+        socket.on('progress', (data) => {
+            progressBar.querySelector('.progress-bar').style.width = `${data.progress}%`;
+        });
+
+        // 更新处理结果
+        async function updateResults() {
+            try {
+                const response = await fetch('/get-images');
+                if (!response.ok) {
+                    throw new Error('获取图片列表失败');
+                }
+                const data = await response.json();
+                
+                function createImageElement(img) {
+                    const container = document.createElement('div');
+                    container.className = 'image-wrapper';
+                    container.style.position = 'relative';
+                    container.style.width = '150px';
+                    container.style.height = '150px';
+                    container.style.margin = '5px';
+                    container.style.borderRadius = '5px';
+                    container.style.overflow = 'hidden';
+                    container.style.backgroundColor = '#f8f9fa';
+
+                    const loadingDiv = document.createElement('div');
+                    loadingDiv.className = 'loading-spinner';
+                    loadingDiv.innerHTML = '<div class="" role="status"></div>';
+                    loadingDiv.style.position = 'absolute';
+                    loadingDiv.style.top = '50%';
+                    loadingDiv.style.left = '50%';
+                    loadingDiv.style.transform = 'translate(-50%, -50%)';
+                    container.appendChild(loadingDiv);
+
+                    const imgElement = document.createElement('img');
+                    imgElement.src = img.path;
+                    imgElement.className = 'preview-image';
+                    imgElement.title = img.name;
+                    imgElement.style.opacity = '1';
+                    imgElement.style.transition = 'opacity 0.3s ease';
+                    imgElement.style.width = '100%';
+                    imgElement.style.height = '100%';
+                    imgElement.style.objectFit = 'cover';
+
+                    function removeAllLoading() {
+                        const spinners = container.querySelectorAll('.loading-spinner');
+                        spinners.forEach(spinner => spinner.remove());
+                    }
+                    imgElement.onload = imgElement.onerror = removeAllLoading;
+                    if (imgElement.complete) {
+                        removeAllLoading();
+                    }
+                    container.appendChild(imgElement);
+                    return container;
+                }
+                
+                function updateTabContent(tabId, images) {
+                    const container = document.getElementById(tabId);
+                    if (images.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center p-3">
+                                <i class="bi bi-info-circle"></i>
+                                <p class="mb-0">暂无图片</p>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = images.map(img => 
+                            createImageElement(img).outerHTML
+                        ).join('');
+                    }
+                }
+                
+                updateTabContent('success', data.success);
+                updateTabContent('failed', data.failed);
+                updateTabContent('no-exif', data.no_exif);
+                
+            } catch (error) {
+                console.error('更新结果失败:', error);
+                ['success', 'failed', 'no-exif'].forEach(tabId => {
+                    const container = document.getElementById(tabId);
+                    container.innerHTML = `
+                        <div class="text-center p-3">
+                            <i class="bi bi-exclamation-circle text-danger"></i>
+                            <p class="mb-0">加载失败，请刷新页面重试</p>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // 清理按钮
+        clearBtn.addEventListener('click', async () => {
+            if (confirm('确定要清理所有数据吗？此操作不可恢复！')) {
+                try {
+                    const response = await fetch('/clear-data', {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        alert('数据已清理');
+                        // 清空所有标签页内容
+                        ['success', 'failed', 'no-exif'].forEach(tabId => {
+                            const container = document.getElementById(tabId);
+                            container.innerHTML = `
+                                <div class="text-center p-3">
+                                    <i class="bi bi-info-circle"></i>
+                                    <p class="mb-0">暂无图片</p>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        throw new Error(result.error || '清理失败');
+                    }
+                } catch (error) {
+                    alert('清理数据时出错：' + error.message);
+                }
+            }
+        });
+
+        // 下载按钮
+        downloadBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/download-processed');
+                if (!response.ok) {
+                    throw new Error('下载失败');
+                }
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'processed_images.zip';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                alert('下载文件时出错：' + error.message);
+            }
+        });
+
+        // 初始加载结果
+        updateResults();
     </script>
 </body>
-
 </html>

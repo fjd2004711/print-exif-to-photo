@@ -1,3 +1,5 @@
+
+
 # 打印EXIF信息到图片
 
 **简体中文** | [English](README_en.md)
@@ -38,7 +40,7 @@
 
 ## 使用方法
 **这是此项目的`命令行`版本，我们已为您构建了`EXE`可执行文件，您可以直接 [下载使用](https://github.com/fjd2004711/print-exif-to-photo/releases)，或切换到 [GUI分支](https://github.com/fjd2004711/print-exif-to-photo/tree/GUI) 构建项目。**
-1. 确保所有的图片都放在 `images` 文件夹中。
+1. 确保所有的 .jpg 图片都放在 `images` 文件夹中。
 2. 在config/config.json中配置API密钥（如果使用高德地图API）。
 3运行脚本:
 ```
@@ -78,4 +80,4 @@ python main.py
 
 ## 许可证
 
-本项目采用 GPL-3.0 许可证。详情请见 `LICENSE` 文件。        
+本项目采用 GPL-3.0 许可证。详情请见 `LICENSE` 文件。

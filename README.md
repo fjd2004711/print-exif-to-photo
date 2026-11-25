@@ -28,29 +28,46 @@
 
 运行此脚本需要安装以下Python模块：
 
-- `PIL`
+- `Pillow`（代码中以 `PIL` 引入）
 - `geopy`
 - `piexif`
-- `datetime`
 - `requests`
+
+`datetime` 属于 Python 标准库，无需安装。
 
 请使用 `pip install -r requirements.txt` 来安装所需的库。
 
 ## 使用方法
 **这是此项目的`命令行`版本，我们已为您构建了`EXE`可执行文件，您可以直接 [下载使用](https://github.com/fjd2004711/print-exif-to-photo/releases)，或切换到 [GUI分支](https://github.com/fjd2004711/print-exif-to-photo/tree/GUI) 构建项目。**
-1. 确保所有的图片都放在 `images` 文件夹中。
-2. 在config/config.json中配置API密钥（如果使用高德地图API）。
-3运行脚本:
-```
+> **运行前须知**：脚本在进入交互前会先探测 Nominatim（`lib/geolocation.py` 中的 `is_nominatim_online()`）是否可达；探测失败会直接 `sys.exit(1)` 退出，**即使你打算使用高德地图 API 也一样**。国内网络环境请先配置代理，否则会在第一步就中断。
+
+1. 确保所有的图片（当前仅处理 `.jpg`）都放在 `images` 文件夹中。
+2. 在 `config/config.json` 中配置 `amap_api_key`（选择高德地图 API 时必填）。
+3. 运行脚本：
+
+```bash
 python main.py
 ```
-它会自动创建一个名为 `tagged_images` 的文件夹，并在其中保存标记了时间戳和地址的新图片。
-3. 如果处理失败，脚本会自动重试。
+
+脚本会依次在命令行询问两项设置：
+
+1. 地址解析 API：输入 `1` 使用高德地图 API（需配置 key），输入 `2` 使用 Nominatim；
+2. 要打印到图片上的信息：输入序号并用逗号分隔，例如 `1,2,3`（依次为 时间、地址、光圈、ISO、快门速度）。
+
+处理结果会写入 `images/` 下的三个子目录：
+
+| 目录 | 内容 |
+| --- | --- |
+| `images/tagged_images/` | 处理成功、已打上时间戳和地址的新图片 |
+| `images/no_exif_images/` | 取不到时间/经纬度的图片（原图另存一份，不加字） |
+| `images/failed_images/` | 处理中报错的图片（原图另存为 `failed_<文件名>`，排查后可重跑） |
 
 ### 更改字体及样式
 
-- 将字体文件放入 `fonts`  文件夹。
-- 修改`config/style.json`中 `font_path` 的字体路径。 （例如`fonts/example.ttf`，默认为`msyh.ttc`[微软雅黑] ）
+- 将字体文件放入 `fonts`  文件夹（仓库里的 `fonts/` 是空目录，不含任何字体文件）。
+- 修改`config/style.json`中 `font_path` 的字体路径。 （例如`fonts/example.ttf`，默认为`msyh.ttc`[微软雅黑]，需要自行放在项目根目录或写成绝对路径）
+
+> 注意：`font_path` 会原样传给 `PIL.ImageFont.truetype()`（`lib/image_utils.py`）。若默认的微软雅黑不存在，第一张图就会抛 `OSError: cannot open resource`，原图被整体复制进 `images/failed_images/`，看起来像"全部处理失败"。Linux / macOS 用户请显式改成自己的字体，例如 `fonts/SourceHanSansSC-Regular.otf` 或 `/System/Library/Fonts/PingFang.ttc`。
 
 #### 配置文件说明
 

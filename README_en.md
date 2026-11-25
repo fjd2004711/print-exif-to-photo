@@ -28,11 +28,12 @@ This script can read EXIF information from photos, extract the shooting time and
 
 The following Python modules are required to run this script:
 
-- `PIL`
+- `Pillow` (imported as `PIL`)
 - `geopy`
 - `piexif`
-- `datetime`
 - `requests`
+
+`datetime` is part of the Python standard library and does not need to be installed.
 
 Use the command `pip install -r requirements.txt` to install these libraries.
 
@@ -40,19 +41,35 @@ Use the command `pip install -r requirements.txt` to install these libraries.
 
 **This is the `command line` version of the project. We have built an `EXE` executable file for you to [use directly](https://github.com/fjd2004711/print-exif-to-photo/releases), or you can switch to the [GUI branch](https://github.com/fjd2004711/print-exif-to-photo/tree/GUI) to build the project.**
 
-1. Ensure all images are placed in the `images` folder.
-2. Configure the API key in `config/config.json` (if using the Amap API).
+> **Before you run it**: the script first probes whether Nominatim is reachable (`is_nominatim_online()` in `lib/geolocation.py`) and calls `sys.exit(1)` if it is not — even when you intend to use the Amap API. Users in mainland China need a proxy configured beforehand, otherwise the run aborts at the first step.
+
+1. Ensure all images (only `.jpg` is processed) are placed in the `images` folder.
+2. Configure `amap_api_key` in `config/config.json` (required when using the Amap API).
 3. Run the script:
-    ```
-   python main.py
-   ```
-    It will automatically create a folder named `tagged_images` and save new images with timestamps and addresses inside.
-3. If processing fails, the script will automatically retry.
+
+```bash
+python main.py
+```
+
+The script then asks two questions on the command line:
+
+1. Geocoding API: `1` for the Amap API (needs a key), `2` for Nominatim;
+2. Which fields to print on the photo: indexes separated by commas, e.g. `1,2,3` (time, address, aperture, ISO, shutter speed).
+
+Results are written into three subfolders of `images/`:
+
+| Folder | Contents |
+| --- | --- |
+| `images/tagged_images/` | Successful output, with timestamp and address burned in |
+| `images/no_exif_images/` | Images without usable time/coordinates (original copied, untouched) |
+| `images/failed_images/` | Images that errored during processing (original copied as `failed_<name>`) |
 
 ### Changing Fonts and Styles
 
-- Add font files to the `fonts` folder.
-- Update the `font_path` in `config/style.json` to the desired font path (e.g., `fonts/example.ttf`; the default is `msyh.ttc` for Microsoft YaHei).
+- Add font files to the `fonts` folder (the `fonts/` directory in this repo is empty and ships no font).
+- Update the `font_path` in `config/style.json` to the desired font path (e.g., `fonts/example.ttf`; the default is `msyh.ttc` for Microsoft YaHei, which you must place in the project root or reference by absolute path).
+
+> Note: `font_path` is passed straight to `PIL.ImageFont.truetype()` (`lib/image_utils.py`). If the default Microsoft YaHei font is missing, the first image raises `OSError: cannot open resource` and every original is copied into `images/failed_images/`, which looks like "everything failed". On Linux / macOS, point it at a font you actually have, e.g. `fonts/SourceHanSansSC-Regular.otf` or `/System/Library/Fonts/PingFang.ttc`.
 
 #### Configuration File Description
 
